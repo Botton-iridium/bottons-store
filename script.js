@@ -1,53 +1,77 @@
 
-// =========================
-// PRODUTOS
-// =========================
+// ================================
+// CONFIGURAÇÃO
+// ================================
 
-// Por enquanto, vamos usar alguns produtos de exemplo.
-// Depois vamos trocar isso pelo sistema que permite
-// adicionar produtos pelo painel.
+let produtos = [];
+let carrinho = JSON.parse(localStorage.getItem("carrinho")) || [];
 
-const produtos = [
-    {
-        id: 1,
-        nome: "Botton Gato",
-        descricao: "Um botton fofo de gatinho.",
-        preco: 5.00,
-        imagem: "imagens/gato.png"
-    },
-    {
-        id: 2,
-        nome: "Botton Estrela",
-        descricao: "Uma estrela para decorar sua mochila.",
-        preco: 6.00,
-        imagem: "imagens/estrela.png"
-    },
-    {
-        id: 3,
-        nome: "Botton Coração",
-        descricao: "Um coração colorido e divertido.",
-        preco: 5.50,
-        imagem: "imagens/coracao.png"
+
+// ================================
+// FORMATAR PREÇO
+// ================================
+
+function formatarPreco(preco) {
+    return Number(preco).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+    });
+}
+
+
+// ================================
+// CARREGAR PRODUTOS
+// ================================
+
+async function carregarProdutos() {
+
+    const lista = document.getElementById("lista-produtos");
+
+    try {
+
+        const resposta = await fetch("produtos.json");
+
+        if (!resposta.ok) {
+            throw new Error("Não foi possível carregar os produtos.");
+        }
+
+        produtos = await resposta.json();
+
+        mostrarProdutos();
+
+    } catch (erro) {
+
+        console.error(erro);
+
+        lista.innerHTML = `
+            <div class="carregando">
+                <p>Não foi possível carregar os produtos.</p>
+            </div>
+        `;
     }
-];
+}
 
 
-// =========================
-// CARRINHO
-// =========================
-
-let carrinho = [];
-
-
-// =========================
+// ================================
 // MOSTRAR PRODUTOS
-// =========================
+// ================================
 
 function mostrarProdutos() {
 
     const lista = document.getElementById("lista-produtos");
 
     lista.innerHTML = "";
+
+    if (produtos.length === 0) {
+
+        lista.innerHTML = `
+            <div class="carregando">
+                <p>Nenhum produto disponível no momento.</p>
+            </div>
+        `;
+
+        return;
+    }
 
     produtos.forEach(produto => {
 
@@ -56,23 +80,23 @@ function mostrarProdutos() {
         card.className = "produto";
 
         card.innerHTML = `
-            <img 
-                src="${produto.imagem}" 
+            <img
+                src="${produto.imagem}"
                 alt="${produto.nome}"
-                onerror="this.src='https://via.placeholder.com/400x400?text=Sem+imagem'"
+                onerror="this.src='https://placehold.co/400x400?text=Sem+imagem'"
             >
 
             <div class="produto-info">
 
                 <h3>${produto.nome}</h3>
 
-                <p>${produto.descricao}</p>
+                <p>${produto.descricao || ""}</p>
 
                 <div class="preco">
-                    R$ ${produto.preco.toFixed(2).replace(".", ",")}
+                    ${formatarPreco(produto.preco)}
                 </div>
 
-                <button 
+                <button
                     class="adicionar"
                     onclick="adicionarCarrinho(${produto.id})"
                 >
@@ -87,13 +111,15 @@ function mostrarProdutos() {
 }
 
 
-// =========================
+// ================================
 // ADICIONAR AO CARRINHO
-// =========================
+// ================================
 
 function adicionarCarrinho(id) {
 
-    const produto = produtos.find(p => p.id === id);
+    const produto = produtos.find(
+        produto => produto.id === id
+    );
 
     if (!produto) {
         return;
@@ -101,15 +127,44 @@ function adicionarCarrinho(id) {
 
     carrinho.push(produto);
 
+    salvarCarrinho();
+
     atualizarCarrinho();
 
     alert(`${produto.nome} foi adicionado ao carrinho!`);
 }
 
 
-// =========================
+// ================================
+// REMOVER DO CARRINHO
+// ================================
+
+function removerCarrinho(index) {
+
+    carrinho.splice(index, 1);
+
+    salvarCarrinho();
+
+    atualizarCarrinho();
+}
+
+
+// ================================
+// SALVAR CARRINHO
+// ================================
+
+function salvarCarrinho() {
+
+    localStorage.setItem(
+        "carrinho",
+        JSON.stringify(carrinho)
+    );
+}
+
+
+// ================================
 // ATUALIZAR CARRINHO
-// =========================
+// ================================
 
 function atualizarCarrinho() {
 
@@ -123,7 +178,7 @@ function atualizarCarrinho() {
         document.getElementById("total-carrinho");
 
 
-    // Atualiza contador
+    // Quantidade de produtos
 
     contador.textContent = carrinho.length;
 
@@ -132,8 +187,9 @@ function atualizarCarrinho() {
 
     if (carrinho.length === 0) {
 
-        itens.innerHTML =
-            "<p>Seu carrinho está vazio.</p>";
+        itens.innerHTML = `
+            <p>Seu carrinho está vazio.</p>
+        `;
 
         total.textContent = "R$ 0,00";
 
@@ -141,41 +197,45 @@ function atualizarCarrinho() {
     }
 
 
-    // Mostra os produtos
+    // Limpa a lista
 
     itens.innerHTML = "";
 
     let valorTotal = 0;
 
 
+    // Cria cada item
+
     carrinho.forEach((produto, index) => {
 
-        valorTotal += produto.preco;
+        valorTotal += Number(produto.preco);
 
         const item =
             document.createElement("div");
 
-        item.style.marginBottom = "15px";
+        item.style.marginBottom = "20px";
 
         item.innerHTML = `
-            <strong>${produto.nome}</strong>
+            <strong>
+                ${produto.nome}
+            </strong>
 
             <br>
 
             <span>
-                R$ ${produto.preco
-                    .toFixed(2)
-                    .replace(".", ",")}
+                ${formatarPreco(produto.preco)}
             </span>
 
             <button
                 onclick="removerCarrinho(${index})"
                 style="
-                    float:right;
-                    border:none;
-                    background:none;
-                    cursor:pointer;
+                    float: right;
+                    border: none;
+                    background: none;
+                    cursor: pointer;
+                    font-size: 16px;
                 "
+                aria-label="Remover produto"
             >
                 ❌
             </button>
@@ -185,54 +245,42 @@ function atualizarCarrinho() {
     });
 
 
-    // Atualiza total
+    // Total
 
     total.textContent =
-        `R$ ${valorTotal.toFixed(2).replace(".", ",")}`;
+        formatarPreco(valorTotal);
 }
 
 
-// =========================
-// REMOVER DO CARRINHO
-// =========================
-
-function removerCarrinho(index) {
-
-    carrinho.splice(index, 1);
-
-    atualizarCarrinho();
-}
-
-
-// =========================
+// ================================
 // ABRIR CARRINHO
-// =========================
+// ================================
 
 function abrirCarrinho() {
 
-    const carrinhoElemento =
+    const elemento =
         document.getElementById("carrinho");
 
-    carrinhoElemento.classList.add("ativo");
+    elemento.classList.add("ativo");
 }
 
 
-// =========================
+// ================================
 // FECHAR CARRINHO
-// =========================
+// ================================
 
 function fecharCarrinho() {
 
-    const carrinhoElemento =
+    const elemento =
         document.getElementById("carrinho");
 
-    carrinhoElemento.classList.remove("ativo");
+    elemento.classList.remove("ativo");
 }
 
 
-// =========================
+// ================================
 // FINALIZAR COMPRA
-// =========================
+// ================================
 
 function finalizarCompra() {
 
@@ -244,15 +292,16 @@ function finalizarCompra() {
     }
 
     alert(
-        "A parte de finalização da compra será configurada depois. 🛒"
+        "A finalização da compra será configurada no próximo passo. 🛍️"
     );
 }
 
 
-// =========================
-// INICIAR LOJA
-// =========================
+// ================================
+// INICIAR
+// ================================
 
-mostrarProdutos();
+carregarProdutos();
 
 atualizarCarrinho();
+
