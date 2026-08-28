@@ -1,0 +1,133 @@
+```html
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Bottons Store</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- CABEÇALHO -->
+    <header class="header">
+        <div class="logo">
+            🔘 Bottons Store
+        </div>
+
+        <nav>
+            <a href="#inicio">Início</a>
+            <a href="#produtos">Produtos</a>
+            <a href="#sobre">Sobre</a>
+        </nav>
+
+        <button class="cart-button" onclick="abrirCarrinho()">
+            🛒 Carrinho
+            <span id="contador-carrinho">0</span>
+        </button>
+    </header>
+
+
+    <!-- BANNER PRINCIPAL -->
+    <main>
+
+        <section id="inicio" class="hero">
+            <div class="hero-content">
+                <h1>Bottons que combinam com você ✨</h1>
+
+                <p>
+                    Encontre bottons divertidos, fofos e estilosos
+                    para deixar suas coisas com a sua cara.
+                </p>
+
+                <a href="#produtos" class="button">
+                    Ver produtos
+                </a>
+            </div>
+        </section>
+
+
+        <!-- PRODUTOS -->
+        <section id="produtos" class="produtos-section">
+
+            <h2>✨ Nossos produtos</h2>
+
+            <p class="subtitulo">
+                Escolha seus bottons favoritos!
+            </p>
+
+            <!--
+                Os produtos serão colocados automaticamente aqui
+                pelo JavaScript.
+            -->
+            <div id="lista-produtos" class="produtos-grid">
+                
+                <div class="carregando">
+                    Carregando produtos...
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- SOBRE -->
+        <section id="sobre" class="sobre">
+
+            <h2>💖 Sobre a loja</h2>
+
+            <p>
+                Bem-vindo à nossa loja de bottons!
+                Aqui você encontra vários modelos para
+                personalizar mochilas, estojos, bolsas e muito mais.
+            </p>
+
+        </section>
+
+    </main>
+
+
+    <!-- CARRINHO -->
+    <div id="carrinho" class="carrinho">
+
+        <div class="carrinho-conteudo">
+
+            <button class="fechar-carrinho" onclick="fecharCarrinho()">
+                ✕
+            </button>
+
+            <h2>🛒 Seu carrinho</h2>
+
+            <div id="itens-carrinho">
+                <p>Seu carrinho está vazio.</p>
+            </div>
+
+            <div class="total">
+                Total: <strong id="total-carrinho">R$ 0,00</strong>
+            </div>
+
+            <button class="finalizar" onclick="finalizarCompra()">
+                Finalizar compra
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- RODAPÉ -->
+    <footer>
+        <p>© 2026 Bottons Store</p>
+        <p>Feito com 💖</p>
+    </footer>
+
+
+    <!-- JAVASCRIPT -->
+    <script src="script.js"></script>
+
+</body>
+</html>
+```
