@@ -1,0 +1,25 @@
+```json
+[
+    {
+        "id": 1,
+        "nome": "Botton Gato",
+        "descricao": "Um botton fofo de gatinho.",
+        "preco": 5.00,
+        "imagem": "imagens/gato.png"
+    },
+    {
+        "id": 2,
+        "nome": "Botton Estrela",
+        "descricao": "Uma estrela para decorar sua mochila.",
+        "preco": 6.00,
+        "imagem": "imagens/estrela.png"
+    },
+    {
+        "id": 3,
+        "nome": "Botton Coração",
+        "descricao": "Um coração colorido e divertido.",
+        "preco": 5.50,
+        "imagem": "imagens/coracao.png"
+    }
+]
+```
