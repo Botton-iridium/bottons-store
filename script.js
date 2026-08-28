@@ -1,4 +1,4 @@
-```javascript
+
 // =========================
 // PRODUTOS
 // =========================
@@ -256,4 +256,3 @@ function finalizarCompra() {
 mostrarProdutos();
 
 atualizarCarrinho();
-```
