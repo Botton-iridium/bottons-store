@@ -1,13 +1,6 @@
 ```javascript
 // ========================================
-// CONFIGURAÇÃO
-// ========================================
-
-let produtos = [];
-
-
-// ========================================
-// ELEMENTOS
+// ELEMENTOS DA PÁGINA
 // ========================================
 
 const formulario = document.getElementById("form-produto");
@@ -25,9 +18,44 @@ inputImagem.addEventListener("change", function () {
     const arquivo = this.files[0];
 
     if (!arquivo) {
+        preview.src = "";
         preview.style.display = "none";
         return;
     }
+
+    // Verificar se o arquivo é uma imagem
+
+    if (!arquivo.type.startsWith("image/")) {
+
+        alert("Escolha um arquivo de imagem.");
+
+        inputImagem.value = "";
+
+        preview.src = "";
+        preview.style.display = "none";
+
+        return;
+    }
+
+
+    // Limite de tamanho: 5 MB
+
+    const limite = 5 * 1024 * 1024;
+
+    if (arquivo.size > limite) {
+
+        alert("A imagem deve ter no máximo 5 MB.");
+
+        inputImagem.value = "";
+
+        preview.src = "";
+        preview.style.display = "none";
+
+        return;
+    }
+
+
+    // Criar prévia
 
     const leitor = new FileReader();
 
@@ -38,32 +66,281 @@ inputImagem.addEventListener("change", function () {
 
     };
 
+    leitor.onerror = function () {
+
+        alert("Não foi possível carregar a imagem.");
+
+    };
+
     leitor.readAsDataURL(arquivo);
 
 });
 
 
 // ========================================
-// CARREGAR PRODUTOS
+// ENVIAR PRODUTO
+// ========================================
+
+formulario.addEventListener("submit", async function (evento) {
+
+    evento.preventDefault();
+
+
+    // Pegar informações do formulário
+
+    const nome =
+        document.getElementById("nome").value.trim();
+
+    const preco =
+        Number(document.getElementById("preco").value);
+
+    const descricao =
+        document.getElementById("descricao").value.trim();
+
+    const arquivo =
+        inputImagem.files[0];
+
+
+    // ========================================
+    // VALIDAR DADOS
+    // ========================================
+
+    if (!arquivo) {
+
+        alert("Escolha uma foto para o produto.");
+
+        return;
+    }
+
+
+    if (!nome) {
+
+        alert("Digite o nome do produto.");
+
+        return;
+    }
+
+
+    if (!Number.isFinite(preco) || preco <= 0) {
+
+        alert("Digite um preço válido.");
+
+        return;
+    }
+
+
+    // ========================================
+    // BOTÃO DE ENVIO
+    // ========================================
+
+    const botao =
+        formulario.querySelector(
+            "button[type='submit']"
+        );
+
+
+    const textoOriginal =
+        botao.textContent;
+
+
+    botao.disabled = true;
+
+    botao.textContent =
+        "⏳ Enviando produto...";
+
+
+    try {
+
+        // ========================================
+        // CONVERTER IMAGEM PARA BASE64
+        // ========================================
+
+        const imagemBase64 =
+            await transformarBase64(arquivo);
+
+
+        // ========================================
+        // ENVIAR PARA A API DA VERCEL
+        // ========================================
+
+        const resposta =
+            await fetch("/api/products", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    nome: nome,
+
+                    descricao: descricao,
+
+                    preco: preco,
+
+                    imagem: imagemBase64
+
+                })
+
+            });
+
+
+        // Tentar ler a resposta
+
+        let resultado;
+
+        try {
+
+            resultado =
+                await resposta.json();
+
+        } catch {
+
+            resultado = {};
+
+        }
+
+
+        // ========================================
+        // VERIFICAR ERRO
+        // ========================================
+
+        if (!resposta.ok) {
+
+            throw new Error(
+                resultado.erro ||
+                "Não foi possível adicionar o produto."
+            );
+
+        }
+
+
+        // ========================================
+        // PRODUTO ADICIONADO
+        // ========================================
+
+        alert(
+            "🎉 Produto adicionado com sucesso!"
+        );
+
+
+        // Limpar formulário
+
+        formulario.reset();
+
+        preview.src = "";
+        preview.style.display = "none";
+
+
+        // Recarregar lista
+
+        await carregarProdutos();
+
+
+    } catch (erro) {
+
+        console.error(
+            "Erro ao adicionar produto:",
+            erro
+        );
+
+
+        alert(
+            "❌ Erro ao adicionar produto:\n\n" +
+            erro.message
+        );
+
+
+    } finally {
+
+        // Restaurar botão
+
+        botao.disabled = false;
+
+        botao.textContent =
+            textoOriginal;
+
+    }
+
+});
+
+
+// ========================================
+// CONVERTER IMAGEM PARA BASE64
+// ========================================
+
+function transformarBase64(arquivo) {
+
+    return new Promise((resolve, reject) => {
+
+        const leitor =
+            new FileReader();
+
+
+        leitor.onload = function () {
+
+            resolve(leitor.result);
+
+        };
+
+
+        leitor.onerror = function () {
+
+            reject(
+                new Error(
+                    "Não foi possível ler a imagem."
+                )
+            );
+
+        };
+
+
+        leitor.readAsDataURL(arquivo);
+
+    });
+
+}
+
+
+// ========================================
+// CARREGAR PRODUTOS DO GITHUB
 // ========================================
 
 async function carregarProdutos() {
 
     try {
 
-        const resposta = await fetch("produtos.json");
+        const resposta =
+            await fetch(
+                "produtos.json?" + Date.now()
+            );
+
 
         if (!resposta.ok) {
-            throw new Error("Erro ao carregar produtos.");
+
+            throw new Error(
+                "Erro ao carregar produtos."
+            );
+
         }
 
-        produtos = await resposta.json();
 
-        mostrarProdutos();
+        const produtos =
+            await resposta.json();
+
+
+        mostrarProdutos(produtos);
+
 
     } catch (erro) {
 
-        console.error(erro);
+        console.error(
+            "Erro ao carregar produtos:",
+            erro
+        );
+
 
         listaProdutos.innerHTML = `
             <p>
@@ -80,25 +357,43 @@ async function carregarProdutos() {
 // MOSTRAR PRODUTOS
 // ========================================
 
-function mostrarProdutos() {
+function mostrarProdutos(produtos) {
 
     listaProdutos.innerHTML = "";
 
-    if (produtos.length === 0) {
+
+    if (!Array.isArray(produtos)) {
 
         listaProdutos.innerHTML = `
-            <p>Nenhum produto cadastrado.</p>
+            <p>
+                O arquivo de produtos está inválido.
+            </p>
         `;
 
         return;
     }
 
 
-    produtos.forEach((produto, index) => {
+    if (produtos.length === 0) {
 
-        const item = document.createElement("div");
+        listaProdutos.innerHTML = `
+            <p>
+                Nenhum produto cadastrado.
+            </p>
+        `;
 
-        item.className = "admin-produto";
+        return;
+    }
+
+
+    produtos.forEach(function (produto) {
+
+        const item =
+            document.createElement("div");
+
+
+        item.className =
+            "admin-produto";
 
 
         item.innerHTML = `
@@ -106,7 +401,9 @@ function mostrarProdutos() {
             <img
                 src="${produto.imagem}"
                 alt="${produto.nome}"
-                onerror="this.src='https://placehold.co/100x100?text=Sem+imagem'"
+                onerror="
+                    this.src='https://placehold.co/100x100?text=Sem+imagem'
+                "
             >
 
             <div class="admin-produto-info">
@@ -125,140 +422,12 @@ function mostrarProdutos() {
 
             </div>
 
-
-            <button
-                class="excluir"
-                onclick="excluirProduto(${index})"
-            >
-                🗑️ Excluir
-            </button>
-
         `;
 
 
         listaProdutos.appendChild(item);
 
     });
-
-}
-
-
-// ========================================
-// ADICIONAR PRODUTO
-// ========================================
-
-formulario.addEventListener("submit", function (evento) {
-
-    evento.preventDefault();
-
-
-    const nome =
-        document.getElementById("nome").value.trim();
-
-    const preco =
-        Number(document.getElementById("preco").value);
-
-    const descricao =
-        document.getElementById("descricao").value.trim();
-
-    const arquivo =
-        inputImagem.files[0];
-
-
-    // Verificação
-
-    if (!arquivo) {
-
-        alert("Escolha uma imagem.");
-
-        return;
-    }
-
-
-    if (!nome) {
-
-        alert("Digite o nome do produto.");
-
-        return;
-    }
-
-
-    if (preco <= 0) {
-
-        alert("Digite um preço válido.");
-
-        return;
-    }
-
-
-    // Criar URL temporária para a imagem
-
-    const imagem =
-        URL.createObjectURL(arquivo);
-
-
-    // Novo produto
-
-    const novoProduto = {
-
-        id: Date.now(),
-
-        nome: nome,
-
-        descricao: descricao,
-
-        preco: preco,
-
-        imagem: imagem
-
-    };
-
-
-    produtos.push(novoProduto);
-
-
-    mostrarProdutos();
-
-
-    // Limpar formulário
-
-    formulario.reset();
-
-    preview.src = "";
-    preview.style.display = "none";
-
-
-    alert(
-        "Produto adicionado à lista! 🎉"
-    );
-
-});
-
-
-// ========================================
-// EXCLUIR PRODUTO
-// ========================================
-
-function excluirProduto(index) {
-
-    const produto = produtos[index];
-
-
-    const confirmar =
-        confirm(
-            `Deseja excluir "${produto.nome}"?`
-        );
-
-
-    if (!confirmar) {
-        return;
-    }
-
-
-    produtos.splice(index, 1);
-
-
-    mostrarProdutos();
 
 }
 
